@@ -1,4 +1,5 @@
 use aiken/builtin
+use aiken/cbor
 use aiken/collection/list
 use aiken/crypto.{keccak_256, sha2_256}
 use aiken/primitive/bytearray.{length}
@@ -66,6 +67,13 @@ fn generate_message_hash(message: String) -> ByteArray {
   message_hash
 }
 
+fn generate_message_hash_test(message: String) -> ByteArray {
+  let bytes = string.to_bytearray(message)
+
+  let message_hash = sha2_256(sha2_256(bytes))
+  message_hash
+}
+
 // const magic_doge =
 //   @"Dogecoin Signed Message:\n"
 
@@ -100,10 +108,10 @@ fn generate_message_hash_evm(message: String) -> ByteArray {
 }
 
 const signature =
-  #"8750b5e1e7b2a42e13e73b11b771b9cc3496eee7c6f6c0f1041350d5345f93f0171b737488d1c505a03910a032227bf520e15eb5af7e0b69f81cf41e3aaabd49"
+  #"34f8d9084aa42e040a2c05177cd368c14ca14e6c2623193d322e5c1dfed7b4e841736d5c22f0a80e5b44f664c3c10672fb0ce2f9f9d8799cfc924f36826ceded"
 
 const pubkey =
-  #"028fa6b017c4ca1b794c2f5eb6413c3bf2537689c026d75a192a26a01ff86d04b3"
+  #"03a84b5bdfb6b4e85fc1bfa2fa8fce292acc0119fd186132aba570b07564f28b5a"
 
 //a57805e57fccecb921cf9acac130b9ca8f76f73fc21ff5c7d04b76849424806e1ee52ad1ef3c5721a9e5ced31ef66afe7e586c8d76349558b20e01f913fb4a8e1c
 const signaturevm =
@@ -115,10 +123,13 @@ const pubkeyevm =
 const messagevm =
   @"BB1354D7A4AD7EB7A82C1A77A8CFBAA8F0F0F7133919FF253A5301309E943876"
 
-const messagebtc = @"hello"
+const messagebtc =
+  @"e564c69259497905d0f5a2d1468b5b1eff5386da1aeea735ea4f1d6abba400ca"
 
 test signature_litecoin() {
   let messageHash = generate_message_hash(messagebtc)
+  let bytes = string.to_bytearray(messagebtc)
+  trace cbor.diagnostic(bytes)
   validate_signature_key(pubkey, messageHash, signature) == True
 }
 
@@ -231,4 +242,14 @@ fn generate_redeemer_string_real(redeemer: RedeemerReal) -> String {
 test sending_assets_validation() {
   generate_redeemer_string_real(test_redeemer_real) == @"F10D57058072065AB13AF839A31E97C18EC7094C5A5E33E9A99110FB1AE92B54"
 }
+
 //TODO, do tests with new hashing functions
+const messaggio_frost = @"message to sign"
+
+test test_frost_bitcoin() {
+  builtin.verify_schnorr_secp256k1_signature(
+    #"50d8bf4b0966b174e9a3b1c48def2a153e17d6450b9e03ea954301a472024072",
+    #"3819ff1b5125e14102ae429929e815d6fada758d4a6886a03b1b1c64aca3a53a",
+    #"e500505a0946b7848ff53f15a377915f0383efda4492dcb0a7e0cc3a253a89cee3c3fd06a1a870e0b4b2209dc2353c92aa59e399ea1a5490db1d44e0c7a40802",
+  )
+}

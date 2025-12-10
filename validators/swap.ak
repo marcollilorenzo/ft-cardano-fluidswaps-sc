@@ -64,8 +64,8 @@ fn validate_swap_expired(tx: Transaction, deadline: Int) {
 
 fn get_hash_from_bytearray_btc(byte: ByteArray) {
   //this is what I sign
-  let concat_message =
-    string.to_bytearray(bytearray.to_hex(sha2_256(sha2_256(byte))))
+  let concat_message = byte
+  //string.to_bytearray(bytearray.to_hex(sha2_256(sha2_256(byte))))
   let size = length(concat_message)
 
   //il doppio sha poi lo rendo stringa e maiuscolo, è quello che firmo
@@ -82,8 +82,7 @@ fn get_hash_from_bytearray_btc(byte: ByteArray) {
 
 fn get_hash_from_bytearray_eth(byte: ByteArray) {
   //this is what I sign
-  let concat_message =
-    string.to_bytearray(bytearray.to_hex(sha2_256(sha2_256(byte))))
+  let concat_message = byte
   let size = string.to_bytearray(to_string(length(concat_message)))
 
   //il doppio sha poi lo rendo stringa e maiuscolo, è quello che firmo
@@ -99,4 +98,34 @@ fn get_hash_from_bytearray_eth(byte: ByteArray) {
 
 fn validate_signature_key(publicKey: ByteArray, msg: ByteArray, sig: ByteArray) {
   builtin.verify_ecdsa_secp256k1_signature(publicKey, msg, sig)
+}
+
+const preimage =
+  #"65353634633639323539343937393035643066356132643134363862356231656666353338366461316165656137333565613466316436616262613430306361"
+
+const signature =
+  #"34f8d9084aa42e040a2c05177cd368c14ca14e6c2623193d322e5c1dfed7b4e841736d5c22f0a80e5b44f664c3c10672fb0ce2f9f9d8799cfc924f36826ceded"
+
+const hashed_password =
+  #"562ed51833f80240954ea8bb507d85311ec865025e633b87a9bd68e7e8d7d494"
+
+const external_user_chain_pubkey =
+  #"03a84b5bdfb6b4e85fc1bfa2fa8fce292acc0119fd186132aba570b07564f28b5a"
+
+test validation() {
+  let message_hash_btc = get_hash_from_bytearray_btc(preimage)
+  let message_hash_eth = get_hash_from_bytearray_eth(preimage)
+  expect sha2_256(preimage) == hashed_password
+  expect or {
+      validate_signature_key(
+        external_user_chain_pubkey,
+        message_hash_btc,
+        signature,
+      ),
+      validate_signature_key(
+        external_user_chain_pubkey,
+        message_hash_eth,
+        signature,
+      ),
+    }
 }
